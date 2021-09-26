@@ -21,7 +21,7 @@ export default (props) => {
   let [caller, setCaller] = useState();
 
   let [enabledAudio, setEnabledAudio] = useState(true);
-  let [enabledVideo, setEnabledVideo] = useState(true);
+  let [enabledVideo, setEnabledVideo] = useState(false);
   // let [inCallingWith, setInCallingWith] = useState('');
   const inCallingWith = useRef('');
 
@@ -71,34 +71,29 @@ export default (props) => {
   }, []);
 
   async function setStreamingDevice(configs = { audio: true, video: true }) {
-    return (
-      navigator.mediaDevices
-        .getUserMedia(configs)
-        // .then((stream) => {
-        //   stream.getVideoTracks()[0].stop();
+    return navigator.mediaDevices
+      .getUserMedia({ audio: true, video: true })
+      .then((stream) => {
+        if (verbose) {
+          console.log(
+            '🚀 ~ file: Room.js ~ line 16 ~ .then ~ stream',
+            stream,
+            stream.getTracks()
+          );
+        }
 
-        //   updateSrcObject(localVideo, stream, setLocalVideoTracksTxt);
+        if (!configs.audio) {
+          stream.getAudioTracks()[0].stop();
+        }
 
-        //   localStream.current = stream;
+        if (!configs.video) {
+          stream.getVideoTracks()[0].stop();
+        }
 
-        //   console.log('Stop camera');
-        // })
-        // .then(() => {
-        //   return navigator.mediaDevices.getUserMedia(configs);
-        // })
-        .then((stream) => {
-          if (verbose) {
-            console.log(
-              '🚀 ~ file: Room.js ~ line 16 ~ .then ~ stream',
-              stream,
-              stream.getTracks()
-            );
-          }
-          updateSrcObject(localVideo, stream, setLocalVideoTracksTxt);
+        updateSrcObject(localVideo, stream, setLocalVideoTracksTxt);
 
-          localStream.current = stream;
-        })
-    );
+        localStream.current = stream;
+      });
   }
 
   function handleReceiveCall(incoming) {
@@ -259,6 +254,7 @@ export default (props) => {
       setTxtStateCallback(
         videoRef.current.srcObject
           .getTracks()
+          .filter((track) => track.readyState === 'live')
           .map((track) => track.kind)
           .join(', ')
       );
@@ -397,17 +393,14 @@ export default (props) => {
       //   tracks: peerRef.current.getTransceivers().length,
       // });
     } else {
-      // console.log({
-      //   tracks: localStream.current.getTracks(),
-      //   video: localStream.current.getVideoTracks()[0],
-      //   peer: peerRef.current,
-      //   senders: peerRef.current.getSenders(),
-      //   receivers: peerRef.current.getReceivers(),
-      //   transceivers: peerRef.current.getTransceivers(),
-      //   found: peerRef.current
-      //     .getSenders()
-      //     .find((sender) => sender.track?.kind === 'video'),
-      // });
+      console.log({
+        tracks: localStream.current.getTracks(),
+        video: localStream.current.getVideoTracks()[0],
+        peer: peerRef.current,
+        senders: peerRef.current.getSenders(),
+        receivers: peerRef.current.getReceivers(),
+        transceivers: peerRef.current.getTransceivers(),
+      });
 
       const tracks = localStream.current.getTracks();
       peerRef.current.getSenders().forEach((sender) => {
