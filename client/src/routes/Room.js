@@ -25,7 +25,7 @@ export default (props) => {
   // let [inCallingWith, setInCallingWith] = useState('');
   const inCallingWith = useRef('');
 
-  const verbose = false;
+  const verbose = true;
 
   function setInCallingWith(val) {
     if (verbose) {
@@ -360,12 +360,12 @@ export default (props) => {
       localStream.current.getVideoTracks()[0].stop();
     } else {
       console.log({
-        abc: remoteVideo.current.srcObject.getVideoTracks()[0],
+        abc: remoteVideo.current.srcObject?.getVideoTracks()[0],
         local: localStream.current.getVideoTracks()[0],
       });
       await setStreamingDevice({ audio: enabledAudio, video: enabledVideo });
       console.log({
-        abc: remoteVideo.current.srcObject.getVideoTracks()[0],
+        abc: remoteVideo.current.srcObject?.getVideoTracks()[0],
         local: localStream.current.getVideoTracks()[0],
       });
     }
@@ -378,6 +378,7 @@ export default (props) => {
     if (!enabledVideo) {
       console.log({
         senders: peerRef.current.getSenders(),
+        receivers: peerRef.current.getReceivers(),
         tracks: peerRef.current.getTransceivers(),
         sender: peerRef.current
           .getSenders()

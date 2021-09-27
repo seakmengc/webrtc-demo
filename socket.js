@@ -1,8 +1,9 @@
 const socket = require('socket.io');
+const { createOfferFor } = require('./webrtc_utils');
 
 const rooms = {};
 
-exports.defineSockets = (server) => {
+exports.defineSockets = (server, broadcastStreams, peers) => {
   const io = socket(server);
   io.on('connection', (socket) => {
     socket.on('join room', (roomID) => {
@@ -17,8 +18,8 @@ exports.defineSockets = (server) => {
       }
       const otherUser = rooms[roomID].find((id) => id !== socket.id);
       if (otherUser) {
-        socket.emit('other user', rooms[roomID]);
-        socket.to(rooms[roomID]).emit('user joined', socket.id);
+        socket.emit('other user', otherUser);
+        socket.to(otherUser).emit('user joined', socket.id);
       }
     });
 
@@ -39,6 +40,73 @@ exports.defineSockets = (server) => {
       socket.emit('other user', socketIdsFiltered);
 
       socket.to(socketIdsFiltered).emit('user joined', socket.id);
+    });
+
+    socket.on('sfu group chat', async () => {
+      const roomId = 'sfu-group-chat';
+      console.log(
+        `🚀  ${new Date().toLocaleString()} ~ file: server.js ~ line 12 ~ socket.on ~ roomId`,
+        roomId
+      );
+      if (rooms[roomId]) {
+        rooms[roomId].push(socket.id);
+      } else {
+        rooms[roomId] = [socket.id];
+      }
+
+      const socketIdsFiltered = rooms[roomId].filter((id) => id !== socket.id);
+      console.log(
+        `🚀  ${new Date().toLocaleString()} ~ socket.on ~ socketIdsFiltered`,
+        socketIdsFiltered
+      );
+      console.log('on group', broadcastStreams);
+      socket.emit(
+        'other user',
+        socketIdsFiltered.map((socketId) => {
+          return {
+            id: socketId,
+          };
+        })
+      );
+
+      socket.to(socketIdsFiltered).emit('user joined', {
+        id: socket.id,
+      });
+
+      // socket.emit(
+      //   'other user',
+      //   await Promise.all(
+      //     socketIdsFiltered
+      //       .filter((socketId) => broadcastStreams[socketId] !== undefined)
+      //       .map((socketId) => {
+      //         return new Promise(async (resolve, reject) => {
+      //           const offer = await createOfferFor(
+      //             broadcastStreams[socketId],
+      //             peers,
+      //             socketId
+      //           );
+      //           resolve({
+      //             id: socketId,
+      //             sdp: offer.localDescription,
+      //           });
+      //         });
+      //       })
+      //   )
+      // );
+
+      // if (!broadcastStreams[socket.id]) {
+      //   return;
+      // }
+
+      // const offer = await createOfferFor(
+      //   broadcastStreams[socket.id],
+      //   peers,
+      //   socket.id
+      // );
+      // socket.to(socketIdsFiltered).emit('user joined', {
+      //   id: socket.id,
+      //   sdp: offer.localDescription,
+      // });
     });
 
     socket.on('offer', (payload) => {
@@ -80,6 +148,10 @@ exports.defineSockets = (server) => {
           io.to(rooms[roomId]).emit('left', socket.id);
         }
       }
+
+      delete broadcastStreams[socket.id];
     });
   });
+
+  return io;
 };

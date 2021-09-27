@@ -4,6 +4,7 @@ import CreateRoom from './routes/CreateRoom';
 import Room from './routes/Room';
 import './App.css';
 import GroupChat from './routes/GroupChat';
+import SFUGroupChat from './routes/SFUGroupChat';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path='/' exact component={CreateRoom} />
           <Route path='/room/:roomID' component={Room} />
           <Route path='/group-chat' component={GroupChat} />
+          <Route path='/sfu-group-chat' component={SFUGroupChat} />
         </Switch>
       </BrowserRouter>
     </div>

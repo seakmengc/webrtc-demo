@@ -11,10 +11,15 @@ const CreateRoom = (props) => {
     props.history.push('/group-chat');
   }
 
+  function joinSFUGroupChat() {
+    props.history.push('/sfu-group-chat');
+  }
+
   return (
     <div>
       <button onClick={create}>Create Room</button>
       <button onClick={joinGroupChat}>Join Group Chat</button>
+      <button onClick={joinSFUGroupChat}>Join SFU Group Chat</button>
     </div>
   );
 };
