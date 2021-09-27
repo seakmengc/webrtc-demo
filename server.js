@@ -2,61 +2,53 @@ const express = require('express');
 const http = require('http');
 const app = express();
 const server = http.createServer(app);
-const socket = require('socket.io');
-const io = socket(server);
 
-const rooms = {};
+const webrtc = require('wrtc');
 
-io.on('connection', (socket) => {
-  socket.on('join room', (roomID) => {
-    console.log(
-      `🚀  ${new Date().toLocaleString()} ~ file: server.js ~ line 12 ~ socket.on ~ roomID`,
-      roomID
-    );
-    if (rooms[roomID]) {
-      rooms[roomID].push(socket.id);
-    } else {
-      rooms[roomID] = [socket.id];
-    }
-    const otherUser = rooms[roomID].find((id) => id !== socket.id);
-    if (otherUser) {
-      socket.emit('other user', otherUser);
-      socket.to(otherUser).emit('user joined', socket.id);
-    }
-  });
+const { defineSockets } = require('./socket');
 
-  socket.on('offer', (payload) => {
-    console.log(
-      `🚀  ${new Date().toLocaleString()} ~ file: server.js ~ line 26 ~ offer ~ payload`,
-      { ...payload, sdp: undefined }
-    );
+defineSockets(server);
 
-    io.to(payload.target).emit('offer', payload);
-  });
+// const iceServers = [
+//   {
+//     urls: 'stun:stun.stunprotocol.org',
+//   },
+// ];
 
-  socket.on('answer', (payload) => {
-    console.log(
-      `🚀  ${new Date().toLocaleString()} ~ file: server.js ~ line 31 ~ answer ~ payload`,
-      { ...payload, sdp: undefined }
-    );
-    io.to(payload.target).emit('answer', payload);
-  });
+// app.post('/consumer', async ({ body }, res) => {
+//   const peer = new webrtc.RTCPeerConnection({
+//     iceServers,
+//   });
+//   const desc = new webrtc.RTCSessionDescription(body.sdp);
+//   await peer.setRemoteDescription(desc);
+//   senderStream
+//     .getTracks()
+//     .forEach((track) => peer.addTrack(track, senderStream));
+//   const answer = await peer.createAnswer();
+//   await peer.setLocalDescription(answer);
+//   const payload = {
+//     sdp: peer.localDescription,
+//   };
 
-  socket.on('ice-candidate', (incoming) => {
-    console.log(
-      `🚀  ${new Date().toLocaleString()} ~ file: server.js ~ line 36 ~ ice-candidate ~ incoming`,
-      incoming
-    );
-    io.to(incoming.target).emit('ice-candidate', incoming.candidate);
-  });
+//   res.json(payload);
+// });
 
-  socket.on('disconnect', function () {
-    for (const roomId in rooms) {
-      rooms[roomId] = rooms[roomId].filter(
-        (socketId) => socketId !== socket.id
-      );
-    }
-  });
-});
+// app.post('/broadcast', async ({ body }, res) => {
+//   const peer = new webrtc.RTCPeerConnection({
+//     iceServers,
+//   });
+
+//   peer.ontrack = (e) => handleTrackEvent(e, peer);
+
+//   const desc = new webrtc.RTCSessionDescription(body.sdp);
+//   await peer.setRemoteDescription(desc);
+//   const answer = await peer.createAnswer();
+//   await peer.setLocalDescription(answer);
+//   const payload = {
+//     sdp: peer.localDescription,
+//   };
+
+//   res.json(payload);
+// });
 
 server.listen(8000, () => console.log('server is running on port 8000'));
