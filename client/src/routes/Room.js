@@ -20,8 +20,8 @@ export default (props) => {
   let [otherUser, setOtherUser] = useState();
   let [caller, setCaller] = useState();
 
-  let [enabledAudio, setEnabledAudio] = useState(true);
-  let [enabledVideo, setEnabledVideo] = useState(false);
+  let [enabledAudio, setEnabledAudio] = useState(false);
+  let [enabledVideo, setEnabledVideo] = useState(true);
   // let [inCallingWith, setInCallingWith] = useState('');
   const inCallingWith = useRef('');
 
@@ -145,13 +145,13 @@ export default (props) => {
         return peerRef.current.setLocalDescription(answer);
       })
       .then(() => {
-        const payload = {
-          target: callerInfo.caller,
-          caller: localSocket.current.id,
-          sdp: peerRef.current.localDescription,
-        };
+        // const payload = {
+        //   target: callerInfo.caller,
+        //   caller: localSocket.current.id,
+        //   sdp: peerRef.current.localDescription,
+        // };
 
-        localSocket.current.emit('answer', payload);
+        // localSocket.current.emit('answer', payload);
 
         setCaller(undefined);
         setInCallingWith(callerInfo.caller);
@@ -283,21 +283,22 @@ export default (props) => {
 
   function createPeer(userId) {
     const peer = new RTCPeerConnection({
+      iceTransportPolicy: 'relay',
       iceServers: [
+        // {
+        //   urls: 'stun:stun.stunprotocol.org?transport=udp',
+        // },
         {
-          urls: 'stun:stun.stunprotocol.org',
-        },
-        {
-          urls: 'turn:iebuy-api.app:3478',
-          username: 'raymond',
-          credential: 'password',
+          urls: 'turn:159.89.207.18:3478?transport=udp',
+          username: 'iebuy',
+          credential: 'Ypi7inHzPjtsYbZWCISB8thPqdY0cV0T',
         },
       ],
     });
 
-    peer.onicecandidate = handleICECandidateEvent;
-    peer.oniceconnectionstatechange = () => {
-      console.log('oniceconnectionstatechange');
+    peer.onicecandidate = (e) => handleICECandidateEvent(e, userId);
+    peer.oniceconnectionstatechange = (e) => {
+      console.log('oniceconnectionstatechange', e);
     };
     peer.ontrack = handleTrackEvent;
 
@@ -307,7 +308,7 @@ export default (props) => {
     return peer;
   }
 
-  function handleICECandidateEvent(e) {
+  function handleICECandidateEvent(e, userId) {
     if (verbose) {
       console.log(
         `🚀  ${new Date().toLocaleString()} ~ handleICECandidateEvent ~ e`,
@@ -321,7 +322,26 @@ export default (props) => {
         candidate: e.candidate,
       };
 
-      localSocket.current.emit('ice-candidate', payload);
+      console.log('Ice');
+      // localSocket.current.emit('ice-candidate', payload);
+    } else {
+      const localDescription = peerRef.current.localDescription;
+
+      localDescription.sdp = localDescription.sdp.replace(
+        /a=ice-options:trickle\s\n/g,
+        ''
+      );
+
+      const payload = {
+        target: userId,
+        caller: localSocket.current.id,
+        sdp: localDescription,
+      };
+
+      console.log('No ice: ', localDescription.type);
+      console.log(localDescription.toJSON());
+
+      localSocket.current.emit(localDescription.type, payload);
     }
   }
 
@@ -331,6 +351,8 @@ export default (props) => {
     peerRef.current
       .createOffer()
       .then((offer) => {
+        console.log('Offer: ', offer.toJSON());
+
         return peerRef.current.setLocalDescription(offer);
       })
       .then(() => {
@@ -340,7 +362,7 @@ export default (props) => {
           sdp: peerRef.current.localDescription,
         };
 
-        localSocket.current.emit('offer', payload);
+        // localSocket.current.emit('offer', payload);
       })
       .catch((e) => console.log(e));
   }
@@ -470,7 +492,7 @@ export default (props) => {
       )}
 
       <div>
-        <video muted autoPlay ref={localVideo} width='200' defa />
+        <video muted autoPlay ref={localVideo} width='200' />
         <p style={{ margin: 0 }}>{localVideoTracksTxt}</p>
       </div>
       <div>

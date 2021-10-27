@@ -166,6 +166,16 @@ export default (props) => {
       initiator: true,
       trickle: false,
       stream,
+      config: {
+        iceTransportPolicy: 'relay',
+        iceServers: [
+          {
+            urls: 'turn:159.89.207.18:3478?transport=udp',
+            username: 'iebuy',
+            credential: 'Ypi7inHzPjtsYbZWCISB8thPqdY0cV0T',
+          },
+        ],
+      },
     });
 
     peer.on('signal', (signal) => {
@@ -174,7 +184,7 @@ export default (props) => {
         caller: callerId,
         sdp: signal,
       };
-      console.log('emit offer');
+      console.log('emit offer', signal);
 
       localSocket.current.emit('offer', payload);
     });
@@ -187,6 +197,19 @@ export default (props) => {
       initiator: false,
       trickle: false,
       stream,
+      config: {
+        iceTransportPolicy: 'relay',
+        iceServers: [
+          {
+            urls: 'stun:159.89.207.18:3478',
+          },
+          {
+            urls: 'turn:159.89.207.18:3478',
+            username: 'iebuy',
+            credential: 'Ypi7inHzPjtsYbZWCISB8thPqdY0cV0T',
+          },
+        ],
+      },
     });
 
     peer.on('signal', (signal) => {

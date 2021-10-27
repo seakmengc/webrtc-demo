@@ -68,7 +68,7 @@ export default (props) => {
 
   let [peerSockets, setPeerSockets] = useState([]);
 
-  let [enabledAudio, setEnabledAudio] = useState(true);
+  let [enabledAudio, setEnabledAudio] = useState(false);
   let [enabledVideo, setEnabledVideo] = useState(true);
 
   const verbose = false;
@@ -76,6 +76,11 @@ export default (props) => {
   const iceServers = [
     {
       urls: 'stun:stun.stunprotocol.org',
+    },
+    {
+      urls: 'turn:159.89.207.18:3478',
+      username: 'iebuy',
+      credential: 'Ypi7inHzPjtsYbZWCISB8thPqdY0cV0T',
     },
   ];
 
@@ -173,8 +178,9 @@ export default (props) => {
       });
   }
 
-  async function broadcastStreams(socketId, stream, afterBroadcastCB) {
+  async function broadcastStreams(socketId, stream) {
     const peer = new RTCPeerConnection({
+      // iceTransportPolicy: 'relay',
       iceServers,
     });
 
@@ -191,6 +197,7 @@ export default (props) => {
 
   function createPeer(mySocketId, toReceiverVideoSocketId) {
     const peer = new RTCPeerConnection({
+      // iceTransportPolicy: 'relay',
       iceServers,
     });
 

@@ -13,8 +13,13 @@ const { defineSockets } = require('./socket');
 const broadcastStreams = [];
 
 const iceServers = [
+  // {
+  //   urls: 'stun:stun.stunprotocol.org',
+  // },
   {
-    urls: 'stun:stun.stunprotocol.org',
+    urls: 'turn:159.89.207.18:3478',
+    username: 'iebuy',
+    credential: 'Ypi7inHzPjtsYbZWCISB8thPqdY0cV0T',
   },
 ];
 
@@ -64,6 +69,7 @@ app.post('/broadcast', async ({ body }, res) => {
 
   const desc = new webrtc.RTCSessionDescription(body.sdp);
   await peer.setRemoteDescription(desc);
+  console.log(`🚀  ${new Date().toLocaleString()} ~ broadcast`, desc);
 
   const answer = await peer.createAnswer();
   await peer.setLocalDescription(answer);
@@ -95,7 +101,9 @@ app.post('/consumer', async ({ body }, res) => {
 
   const payload = {
     sdp: peer.localDescription,
+    streams: broadcastStreams[body.target],
   };
+  console.log(broadcastStreams[body.target].getTracks()[0]);
 
   res.json(payload);
 });
